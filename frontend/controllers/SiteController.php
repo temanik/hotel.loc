@@ -1,6 +1,7 @@
 <?php
 namespace frontend\controllers;
 
+use frontend\models\Rooms;
 use Yii;
 use yii\base\InvalidParamException;
 use yii\web\BadRequestHttpException;
@@ -72,7 +73,31 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
-        return $this->render('index');
+        $rooms = Rooms::find()->all();
+
+        return $this->render('index', compact('rooms'));
+    }
+
+    public function actionBooknow($room_id = 1)
+    {
+        $rooms = Rooms::find()->all();
+        $room = $rooms[0];
+
+        foreach ($rooms as $r){
+            if($r->id == $room_id) {
+                $room = $r;
+                break;
+            }
+        }
+
+        return $this->render('booknow', compact('rooms', 'room'));
+    }
+
+    public function actionRooms()
+    {
+        $rooms = Rooms::find()->all();
+
+        return $this->render('rooms', compact('rooms'));
     }
 
     /**
@@ -111,6 +136,21 @@ class SiteController extends Controller
     }
 
     /**
+     * Displays about page.
+     *
+     * @return mixed
+     */
+    public function actionAbout()
+    {
+        return $this->render('about');
+    }
+
+    public function actionBlog()
+    {
+        return $this->render('blog');
+    }
+
+    /**
      * Displays contact page.
      *
      * @return mixed
@@ -119,28 +159,20 @@ class SiteController extends Controller
     {
         $model = new ContactForm();
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            if ($model->sendEmail(Yii::$app->params['adminEmail'])) {
-                Yii::$app->session->setFlash('success', 'Thank you for contacting us. We will respond to you as soon as possible.');
+            if ($model->contact(Yii::$app->params['adminEmail'])) {
+                Yii::$app->session->setFlash('success', 'Спасибо что связались с нами. Мы ответим вам в ближайшее время.');
             } else {
-                Yii::$app->session->setFlash('error', 'There was an error sending your message.');
+                Yii::$app->session->setFlash('error', 'Во время отправки Вашего сообщения произошла ошибка!');
             }
 
-            return $this->refresh();
+            return $this->render('contact', [
+                'model' => $model,
+            ]);
         } else {
             return $this->render('contact', [
                 'model' => $model,
             ]);
         }
-    }
-
-    /**
-     * Displays about page.
-     *
-     * @return mixed
-     */
-    public function actionAbout()
-    {
-        return $this->render('about');
     }
 
     /**
@@ -211,5 +243,10 @@ class SiteController extends Controller
         return $this->render('resetPassword', [
             'model' => $model,
         ]);
+    }
+
+    public function actionError()
+    {
+        return $this->render('error');
     }
 }
